@@ -24,15 +24,8 @@ class SimulationManager
     @result_totals[result] += 1
   end
 
-  def win_percentage_when_switching(result_totals)
-    percentage = result_totals[:switched_and_won].to_f / (result_totals[:switched_and_won] + result_totals[:switched_and_lost]) * 100
-    percentage = 0 if percentage.nan?
-    percentage = percentage.round(2)
-  end
-
-  def win_percentage_when_keeping_guess(result_totals)
-    percentage = result_totals[:didnt_switch_and_won].to_f / (result_totals[:didnt_switch_and_won] + result_totals[:didnt_switch_and_lost]) * 100
-    percentage = 0 if percentage.nan?
+  def win_percentage(total_won, total_lost)
+    percentage = total_won == 0 ? 0 : total_won.to_f / (total_won + total_lost) * 100
     percentage = percentage.round(2)
   end
 
@@ -41,13 +34,13 @@ class SimulationManager
     # details for when the contestant switches
     puts "Number of wins when switching: #{@result_totals[:switched_and_won]}"
     puts "Number of losses when switching: #{@result_totals[:switched_and_lost]}"
-    puts "Win % when switching: #{win_percentage_when_switching(@result_totals)}%"
+    puts "Win % when switching: #{win_percentage(@result_totals[:switched_and_won], @result_totals[:switched_and_lost])}%"
 
     puts "---------------------------------------------------"
     # details for when the contestant doesn't switch
     puts "Number of wins when keeping the same guess: #{@result_totals[:didnt_switch_and_won]}"
     puts "Number of losses when keeping the same guess: #{@result_totals[:didnt_switch_and_lost]}"
-    puts "Win % when keeping guess: #{win_percentage_when_keeping_guess(@result_totals)}%"
+    puts "Win % when keeping guess: #{win_percentage(@result_totals[:didnt_switch_and_won], @result_totals[:didnt_switch_and_lost])}%"
   end
 end
 
