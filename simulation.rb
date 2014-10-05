@@ -1,163 +1,140 @@
-def Simulation
+class Simulation
   def initialize(options)
     @options = options
+    @num_doors = @options[:number_of_doors]
+    @interactive_mode = @options[:interactive_mode]
+    @show_details = @options[:show_details]
   end
 
-  # returns 1 based index for which door to reveal
-  # based on what the contestant guesses and which door the car is behind
-  def get_opened_door_number(contestants_guess, number_of_door_with_car, total_number_of_doors)
-    possible_open_doors = []
-    for i in 1..total_number_of_doors 
-      if i != contestants_guess and i != number_of_door_with_car
-        possible_open_doors << i
-      end
-    end
-    
-    return possible_open_doors[rand(0..possible_open_doors.length - 1)]
-  end
-
-  def set_up_doors(num_doors)
-    @all_doors = Array.new(num_doors).tap do |door|
-      door = 'goat'
+  def set_up_doors
+    all_doors = []
+    for door_number in (1..@num_doors) do
+      # use a 1 based index for the door number
+      # so that when displaying output it shows 1-3 instead of 0-2
+      all_doors << { value: :goat, state: :closed, number: door_number }
     end
 
     # put a car as the prize for one of the doors
-    @all_doors[rand(0..num_doors)] = 'car'
+    all_doors[rand(0..@num_doors - 1)][:value] = :car
+    all_doors
   end
 
-  def get_contestants_guess(interactive_mode)
-    contestants_initial_guess = 0
-    if use_randomized_guessing
-      contestants_initial_guess = rand(1..number_of_doors)
-      puts "Contestant's initial guess: #{contestants_initial_guess}" if show_details
-    else 
-      #get input from contestant
+  def contestant_wants_to_switch?
+    if @interactive_mode
+      puts "Do you want to switch doors? (yN)"
+      contestant_wants_to_switch = gets.chomp == 'y'
+    else
+      contestant_wants_to_switch = [true, false].sample
+      if contestant_wants_to_switch
+        puts "Contestant chooses to switch guess" if @show_details
+      else
+        puts "Contestant chooses NOT to switch guess" if @show_details
+      end
+    end
+
+    contestant_wants_to_switch
+  end
+
+  def get_switched_door(first_guess, revealed_door)
+    # an array of door numbers that can be guessed
+    # note that the contestants first guess nor revealed door can be guessed
+    guessable_doors = (1..@num_doors).to_a - [revealed_door, first_guess]
+    if @interactive_mode
+      if guessable_doors.length == 1 # when there are 3 doors, there's only one choice for the switched guess
+        final_guess = guessable_doors.first
+      else
+        while guessable_doors.select { |el| el == final_door_guess }.empty? # keep looping until the user picks a guessable door
+          puts "Door number to switch to:"
+          final_door_guess = gets.to_i
+        end
+      end
+    else
+      # randomly pick the second door on the contestant's behalf
+      guessable_doors.sample
+    end
+  end
+
+  def contestants_second_guess(first_guess, revealed_door)
+    if contestant_wants_to_switch?
+      final_guess = get_switched_door(first_guess, revealed_door)
+    else
+      # contestant does NOT want to switch
+      final_guess = first_guess
+    end
+
+    final_guess
+  end
+
+  def contestants_first_guess
+    if @interactive_mode
+      # get input from contestant
       puts "Enter a door number:"
-      contestants_initial_guess = gets.to_i
+      contestants_guess = gets.to_i
+    else
+      contestants_guess = rand(1..@num_doors)
+      puts "Contestant's initial guess: #{contestants_guess}" if @show_details
+    end
+
+    contestants_guess
+  end
+
+  def reveal_door(contestants_initial_guess, door_with_prize)
+    # an array of door numbers that can be revealed
+    # note that the contestants guess nor the door with the car can be revealed
+    revealable_doors = (1..@num_doors).to_a - [door_with_prize, contestants_initial_guess]
+    revealed_door_number = revealable_doors.sample
+
+    @all_doors[revealed_door_number - 1][:state] = :opened
+    puts "Door #{revealed_door_number} opens" if @show_details
+
+    revealed_door_number
+  end
+
+  def display_game_results(final_guess, door_with_prize, prize_found, switching_wouldve_helped)
+    if @show_details
+      puts "Final guess: #{final_guess}"
+      puts "Door with car: #{door_with_prize}"
+      puts "Contestant's final guess was correct: #{prize_found}"
+      puts "Switching would have helped: #{switching_wouldve_helped}"
     end
   end
 
   def run
-    set_up_doors(@options[:number_of_doors])
-    contestants_guess = get_contestants_guess(@options[:interactive_mode]) #TODO: resume here
+    @all_doors = set_up_doors
+    @door_with_prize = @all_doors.select { |hash| hash[:value] == :car }.first[:number]
 
-    opened_door = get_opened_door_number(contestants_initial_guess, door_with_car, number_of_doors)
+    contestants_initial_guess = contestants_first_guess
+    revealed_door_number = reveal_door(contestants_initial_guess, @door_with_prize)
+    final_guess = contestants_second_guess(contestants_initial_guess, revealed_door_number)
 
-    puts "Door #{opened_door} opens" if show_details
-    if use_randomized_guessing
-      if rand(1..2) == 1
-        contestant_wants_to_switch = 'y'
-        puts "Contestant chooses to switch guess" if show_details
-      else
-        puts "Contestant chooses NOT to switch guess" if show_details
-      end
-    else
-      puts "Do you want to switch doors?" 
-      contestant_wants_to_switch = gets.chomp
-    end
+    prize_found = @all_doors[final_guess - 1][:value] == :car
+    contestant_switched = (contestants_initial_guess != final_guess)
+    switching_wouldve_helped = (@door_with_prize != contestants_initial_guess)
 
-    final_door_guess = 0
-    if contestant_wants_to_switch == 'y'
-      if use_randomized_guessing
-        #pick a random door for the 2nd guess
-        possible_final_guesses = Array.new
-
-        for i in 1..number_of_doors
-          if i != contestants_initial_guess and i != opened_door
-            possible_final_guesses << i 
-          end
-        end
-
-        final_door_guess = possible_final_guesses[rand(0..possible_final_guesses.length - 1)]
-      else
-        #have the contestant pick another door
-        if number_of_doors > 3 
-          while final_door_guess != contestants_initial_guess and final_door_guess != opened_door
-            puts "Door number to switch to:"
-            final_door_guess = gets.to_i
-          end
-        else
-          #for 3 doors, there is no decision to be made on which door is the "new" door
-          for i in 1..number_of_doors
-            if i != contestants_initial_guess and i != opened_door
-              final_door_guess = i
-            end
-          end
-          
-        end
-      end
-    else #contestant does NOT want to switch
-      final_door_guess = contestants_initial_guess
-    end
-
-    contestant_guessed_correctly = false
-    if final_door_guess == door_with_car
-      contestant_guessed_correctly = true 
-    end
-
-    switching_wouldve_helped = false
-    if door_with_car != contestants_initial_guess
-      switching_wouldve_helped = true
-    end
-
-    if show_details
-      puts "final guess: #{final_door_guess}"
-      puts "door with car: #{door_with_car}"
-      puts "contestant guessed correctly: #{contestant_guessed_correctly}"
-      puts "switching would have helped: #{switching_wouldve_helped}"
-    end
-
-    results = Hash.new
-    results[:contestant_switched] = (contestant_wants_to_switch == 'y')
-    results[:contestant_guessed_correctly] = contestant_guessed_correctly 
-    
-    return results
+    display_game_results(final_guess, @door_with_prize, prize_found, switching_wouldve_helped)
+    set_result(prize_found, contestant_switched)
   end
 
-  total_wins_when_switching = 0
-  total_losses_when_switching = 0
-  total_wins_when_keeping_guess = 0
-  total_losses_when_keeping_guess = 0
-
-
-  use_random_guesses = !use_interactive_mode
-
-  for i in 1..options[:number_of_simulations]
-    results = run_game(default_number_of_doors, use_random_guesses, show_details_option)
-    if results[:contestant_switched]
-      if results[:contestant_guessed_correctly]
-        total_wins_when_switching += 1 
+  def set_result(prize_found, contestant_switched)
+    if prize_found
+      # contestant won
+      if contestant_switched
+        @result = :switched_and_won
       else
-        total_losses_when_switching += 1 
+        @result = :didnt_switch_and_won
       end
     else
-      if results[:contestant_guessed_correctly]
-        total_wins_when_keeping_guess += 1 
+      # contestant lost
+      if contestant_switched
+        @result = :switched_and_lost
       else
-        total_losses_when_keeping_guess += 1 
+        @result = :didnt_switch_and_lost
       end
     end
   end
 
-  puts ""
-  #details for when the contestant switches
-  puts "wins when switching: #{total_wins_when_switching}" if show_details_option 
-  puts "losses when switching: #{total_losses_when_switching}" if show_details_option 
-
-  win_percentage_when_switching = total_wins_when_switching.to_f / ( total_wins_when_switching + total_losses_when_switching ) * 100
-  win_percentage_when_switching = 0 if win_percentage_when_switching.nan?
-  win_percentage_when_switching = win_percentage_when_switching.round(2)
-  puts "win % when switching: #{win_percentage_when_switching}%"
-
-  puts ""
-  #details for when the contestant switches
-  puts "wins when keeping the same guess: #{total_wins_when_keeping_guess}" if show_details_option 
-  puts "losses when keeping the same guess: #{total_losses_when_keeping_guess}" if show_details_option 
-
-  win_percentage_when_keeping_guess = total_wins_when_keeping_guess.to_f / (total_wins_when_keeping_guess + total_losses_when_keeping_guess) * 100
-  win_percentage_when_keeping_guess = 0 if win_percentage_when_keeping_guess.nan?
-  win_percentage_when_keeping_guess = win_percentage_when_keeping_guess.round(2)
-  puts "win % when keeping guess: #{win_percentage_when_keeping_guess}%"
-
+  def get_result
+    @result
+  end
 end
 

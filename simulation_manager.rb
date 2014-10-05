@@ -1,29 +1,26 @@
-def SimulationManager
+class SimulationManager
   def initialize(options)
     @options = options
-    #total_wins_when_switching = 0
-    #total_losses_when_switching = 0
-    #total_wins_when_keeping_guess = 0
-    #total_losses_when_keeping_guess = 0
-    #use_random_guesses = !use_interactive_mode
-  end
 
-  def run_simulations
-    @options[:number_of_simulations].times do
-      simulation = Simulation.new(@options)
-      simulation.run
-      log_result(simulation.result)
-    end
-  end
-
-  def log_result(result)
     @result_totals = {
       switched_and_won: 0,
       switched_and_lost: 0,
       didnt_switch_and_won: 0,
       didnt_switch_and_lost: 0
     }
+  end
 
+  def run_simulations
+    for i in (1..@options[:number_of_simulations])
+      puts "Game #{i}: " if @options[:show_details]
+      simulation = Simulation.new(@options)
+      simulation.run
+      log_result(simulation.get_result)
+      puts "\n\n" if @options[:show_details]
+    end
+  end
+
+  def log_result(result)
     @result_totals[result] += 1
   end
 
@@ -50,7 +47,7 @@ def SimulationManager
     # details for when the contestant doesn't switch
     puts "Number of wins when keeping the same guess: #{@result_totals[:didnt_switch_and_won]}"
     puts "Number of losses when keeping the same guess: #{@result_totals[:didnt_switch_and_lost]}"
-    puts "Win % when keeping guess: #{win_percentage_when_keeping_guess[@result_totals]}%"
+    puts "Win % when keeping guess: #{win_percentage_when_keeping_guess(@result_totals)}%"
   end
 end
 

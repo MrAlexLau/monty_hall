@@ -12,8 +12,15 @@
 $LOAD_PATH << '.'
 require 'options.rb'
 require 'simulation.rb'
+require 'simulation_manager.rb'
 
-options = get_options(ARGV[0] || 100, ARGV[1] == 'true', ARGV[2] == 'true', ARGV[3] || 3)
+# read command line args
+number_of_simulations = (ARGV[0] || 100).to_i
+show_details = ARGV[1] == 'true'
+interactive_mode = ARGV[2] == 'true'
+number_of_doors = ARGV[3] || 3 # default to 3 doors
+
+options = get_options(number_of_simulations, show_details, interactive_mode, number_of_doors)
 
 # clear out arguments so "gets" method can be used later
 ARGV.clear
