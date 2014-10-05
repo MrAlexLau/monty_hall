@@ -1,5 +1,5 @@
 # This program simulates the monty hall problem
-# It has 3 command line arguments:
+# It has 4 command line arguments:
 #  1. The number of simulations to run (default 100)
 #  2. A boolean for outputting the details of EACH game (defaults to false)
 #  3. A boolean for interactive mode. if set to true, user input is required. if it's false, simulations are run automatically with random door choices (defaults to false)
@@ -28,4 +28,3 @@ ARGV.clear
 simulation_manager = SimulationManager.new(options)
 simulation_manager.run_simulations
 simulation_manager.print_stats
-
