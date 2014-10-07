@@ -16,6 +16,8 @@ class Simulation
 
     # put a car as the prize for one of the doors
     all_doors[rand(0..@num_doors - 1)][:value] = :car
+    @door_with_prize = all_doors.select { |hash| hash[:value] == :car }.first[:number]
+
     all_doors
   end
 
@@ -101,7 +103,6 @@ class Simulation
 
   def run
     @all_doors = set_up_doors
-    @door_with_prize = @all_doors.select { |hash| hash[:value] == :car }.first[:number]
 
     contestants_initial_guess = contestants_first_guess
     revealed_door_number = reveal_door(contestants_initial_guess, @door_with_prize)
