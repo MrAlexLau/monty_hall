@@ -8,6 +8,6 @@ This program simulates the [monty hall problem](http://en.wikipedia.org/wiki/Mon
 
 Example:
 ``` bash
-  $ ruby montyHall.rb 500 true false 5
+  $ ruby monty_hall.rb 500 true false 5
 ```
 The line above runs the program with 500 simulations, using 5 doors and showing the details for each game, and automatically choosing random doors for each simulation.

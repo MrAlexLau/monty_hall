@@ -1,9 +1,46 @@
 class Simulation
+  attr_reader :result
+
   def initialize(options)
     @options = options
     @num_doors = @options[:number_of_doors]
     @interactive_mode = @options[:interactive_mode]
     @show_details = @options[:show_details]
+  end
+
+  def run
+    @all_doors = set_up_doors
+
+    contestants_initial_guess = contestants_first_guess
+    revealed_door_number = reveal_door(contestants_initial_guess, @door_with_prize)
+    final_guess = contestants_second_guess(contestants_initial_guess, revealed_door_number)
+
+    prize_found = @all_doors[final_guess - 1][:value] == :car
+    contestant_switched = (contestants_initial_guess != final_guess)
+    switching_wouldve_helped = (@door_with_prize != contestants_initial_guess)
+
+    display_game_results(final_guess, @door_with_prize, prize_found, switching_wouldve_helped)
+    set_result(prize_found, contestant_switched)
+  end
+
+  private
+
+  def set_result(prize_found, contestant_switched)
+    if prize_found
+      # contestant won
+      if contestant_switched
+        @result = :switched_and_won
+      else
+        @result = :didnt_switch_and_won
+      end
+    else
+      # contestant lost
+      if contestant_switched
+        @result = :switched_and_lost
+      else
+        @result = :didnt_switch_and_lost
+      end
+    end
   end
 
   def set_up_doors
@@ -101,41 +138,5 @@ class Simulation
     end
   end
 
-  def run
-    @all_doors = set_up_doors
-
-    contestants_initial_guess = contestants_first_guess
-    revealed_door_number = reveal_door(contestants_initial_guess, @door_with_prize)
-    final_guess = contestants_second_guess(contestants_initial_guess, revealed_door_number)
-
-    prize_found = @all_doors[final_guess - 1][:value] == :car
-    contestant_switched = (contestants_initial_guess != final_guess)
-    switching_wouldve_helped = (@door_with_prize != contestants_initial_guess)
-
-    display_game_results(final_guess, @door_with_prize, prize_found, switching_wouldve_helped)
-    set_result(prize_found, contestant_switched)
-  end
-
-  def set_result(prize_found, contestant_switched)
-    if prize_found
-      # contestant won
-      if contestant_switched
-        @result = :switched_and_won
-      else
-        @result = :didnt_switch_and_won
-      end
-    else
-      # contestant lost
-      if contestant_switched
-        @result = :switched_and_lost
-      else
-        @result = :didnt_switch_and_lost
-      end
-    end
-  end
-
-  def get_result
-    @result
-  end
 end
 

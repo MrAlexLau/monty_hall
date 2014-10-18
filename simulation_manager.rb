@@ -15,18 +15,9 @@ class SimulationManager
       puts "Game #{i}: " if @options[:show_details]
       simulation = Simulation.new(@options)
       simulation.run
-      log_result(simulation.get_result)
+      log_result(simulation.result)
       puts "\n\n" if @options[:show_details]
     end
-  end
-
-  def log_result(result)
-    @result_totals[result] += 1
-  end
-
-  def win_percentage(total_won, total_lost)
-    percentage = total_won == 0 ? 0 : total_won.to_f / (total_won + total_lost) * 100
-    percentage = percentage.round(2)
   end
 
   def print_stats
@@ -41,6 +32,17 @@ class SimulationManager
     puts "Number of wins when keeping the same guess: #{@result_totals[:didnt_switch_and_won]}"
     puts "Number of losses when keeping the same guess: #{@result_totals[:didnt_switch_and_lost]}"
     puts "Win % when keeping guess: #{win_percentage(@result_totals[:didnt_switch_and_won], @result_totals[:didnt_switch_and_lost])}%"
+  end
+
+  private
+
+  def log_result(result)
+    @result_totals[result] += 1
+  end
+
+  def win_percentage(total_won, total_lost)
+    percentage = total_won == 0 ? 0 : total_won.to_f / (total_won + total_lost) * 100
+    percentage = percentage.round(2)
   end
 end
 
