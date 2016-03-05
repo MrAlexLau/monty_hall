@@ -15,10 +15,12 @@ require 'simulation.rb'
 require 'simulation_manager.rb'
 
 # read command line args
+# there's more robust ways to do this (eg - with named args via OptionsParser),
+# but this is simple and effective for the scope of this small program
 number_of_simulations = (ARGV[0] || 100).to_i
-show_details = ARGV[1] == 'true'
-interactive_mode = ARGV[2] == 'true'
-number_of_doors = ARGV[3] || 3 # default to 3 doors
+show_details = (ARGV[1] == 'true')
+interactive_mode = (ARGV[2] == 'true')
+number_of_doors = (ARGV[3] || 3) # default to 3 doors
 
 options = get_options(number_of_simulations, show_details, interactive_mode, number_of_doors)
 
